@@ -10,6 +10,7 @@ const MQTT_BROKER = 'mqtt://broker.emqx.io:1883';
 const MQTT_TOPIC = 'PMS/d1';
 
 let latestMessage = null;
+let lastMessageTime = 0; // store the last received timestamp (in ms)
 
 // Helper function to format time as human-readable string
 function getReadableTime() {
@@ -44,16 +45,23 @@ client.on('message', (topic, message) => {
       timestamp: getReadableTime()
     };
 
+    lastMessageTime = Date.now(); // store current time in ms
     console.log('New MQTT message:', latestMessage);
   }
 });
 
 // HTTP endpoint to get latest message
 app.get('/api/latest', (req, res) => {
-  if (latestMessage) {
+  const now = Date.now();
+  const diffMinutes = (now - lastMessageTime) / (1000 * 60); // convert ms → minutes
+
+  if (latestMessage && diffMinutes <= 5) {
     res.json(latestMessage);
   } else {
-    res.status(404).json({ error: 'No message received yet' });
+    res.json({
+      data: "no response",
+      timestamp: getReadableTime()
+    });
   }
 });
 

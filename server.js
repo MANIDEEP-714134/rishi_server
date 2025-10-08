@@ -11,6 +11,15 @@ const MQTT_TOPIC = 'PMS/d1';
 
 let latestMessage = null;
 
+// Helper function to format time as human-readable string
+function getReadableTime() {
+  const now = new Date();
+  return now.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour12: false
+  });
+}
+
 // Connect to MQTT broker
 const client = mqtt.connect(MQTT_BROKER);
 
@@ -23,11 +32,18 @@ client.on('connect', () => {
 
 client.on('message', (topic, message) => {
   if (topic === MQTT_TOPIC) {
+    let payload;
     try {
-      latestMessage = JSON.parse(message.toString());
+      payload = JSON.parse(message.toString());
     } catch (e) {
-      latestMessage = { raw: message.toString() };
+      payload = { raw: message.toString() };
     }
+
+    latestMessage = {
+      data: payload,
+      timestamp: getReadableTime()
+    };
+
     console.log('New MQTT message:', latestMessage);
   }
 });
